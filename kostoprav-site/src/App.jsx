@@ -1,122 +1,140 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+import { useState } from "react";
+
+import Header from "./components/Header";
+import Footer from "./components/Footer";
+
+import Home from "./pages/Home";
+import Courses from "./pages/Courses";
+import Teachers from "./pages/Teachers";
+import Certificates from "./pages/Certificates";
+import Contacts from "./pages/Contacts";
+import Admin from "./pages/Admin";
+
+export default function App() {
+  const isAdminRoute = window.location.pathname.replace(/\/+$/, "") === "/admin";
+  const [page, setPage] = useState("home");
+
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("itadis-user")) || null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [name, setName] = useState("");
+  const [age, setAge] = useState("");
+  const [error, setError] = useState("");
+
+  function handleEnter(event) {
+    event.preventDefault();
+
+    const cleanName = name.trim();
+    const numericAge = Number(age);
+
+    if (cleanName.length < 2) {
+      setError("Введите имя (минимум 2 символа).");
+      return;
+    }
+
+    if (!Number.isInteger(numericAge) || numericAge < 1 || numericAge > 120) {
+      setError("Введите корректный возраст.");
+      return;
+    }
+
+    const newUser = {
+      name: cleanName,
+      age: numericAge,
+    };
+
+    localStorage.setItem("itadis-user", JSON.stringify(newUser));
+    setUser(newUser);
+    setError("");
+  }
+
+  function changePage(newPage) {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  if (isAdminRoute) {
+    return <Admin />;
+  }
+
+  if (!user) {
+    return (
+      <main className="welcome-screen">
+        <div className="welcome-glow"></div>
+
+        <form className="welcome-card" onSubmit={handleEnter}>
+          <img
+            src="/images/logo.png"
+            alt="IT ADIS"
+            className="welcome-logo"
+          />
+
+          <span className="eyebrow"><span className="brand"><span className="brand-it">IT</span><span className="brand-adis">adis</span></span> EDUCATION</span>
+
+          <h1>
+            Добро пожаловать
+            <br />
+            в <span className="brand"><span className="brand-it">IT</span><span className="brand-adis">adis</span></span>!
+          </h1>
+
+          <p>
+            Перед началом знакомства с нашими курсами
+            расскажи немного о себе.
+          </p>
+
+          <div className="welcome-fields">
+            <label htmlFor="student-name">Как тебя зовут?</label>
+            <input
+              id="student-name"
+              type="text"
+              placeholder="Введи своё имя"
+              value={name}
+              maxLength={60}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+
+            <label htmlFor="student-age">Сколько тебе лет?</label>
+            <input
+              id="student-age"
+              type="number"
+              placeholder="Введи свой возраст"
+              value={age}
+              min="1"
+              max="120"
+              onChange={(e) => setAge(e.target.value)}
+              required
+            />
+          </div>
+
+          {error && <p className="welcome-error">{error}</p>}
+
+          <button type="submit" className="btn-primary welcome-submit">
+            Перейти на сайт ↗
+          </button>
+
+          <small>Твои данные сохраняются только в этом браузере.</small>
+        </form>
+      </main>
+    );
+  }
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      <Header page={page} setPage={changePage} />
 
-      <div className="ticks"></div>
+      {page === "home" && <Home setPage={changePage} />}
+      {page === "courses" && <Courses user={user} />}
+      {page === "teachers" && <Teachers />}
+      {page === "certificates" && <Certificates />}
+      {page === "contacts" && <Contacts user={user} />}
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <Footer />
     </>
-  )
+  );
 }
-
-export default App
