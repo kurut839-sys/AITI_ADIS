@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { getMediaUrl, supabase } from "../lib/supabase";
+import { useI18n } from "../lib/i18n";
 
 export default function Certificates() {
+  const { t } = useI18n();
   const [certificates, setCertificates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -46,22 +48,22 @@ export default function Certificates() {
   return (
     <main className="page-container">
       <div className="section-title page-title">
-        <span>OUR ACHIEVEMENTS</span>
-        <h1>Наши <span>сертификаты</span></h1>
-        <p>Результаты обучения и достижения наших студентов.</p>
+        <span>{t("OUR ACHIEVEMENTS")}</span>
+        <h1>{t("Наши ")}<span>{t("сертификаты")}</span></h1>
+        <p>{t("Результаты обучения и достижения наших студентов.")}</p>
       </div>
 
       {loading ? (
-        <div className="empty-upload"><p>Загружаем сертификаты...</p></div>
+        <div className="empty-upload"><p>{t("Загружаем сертификаты...")}</p></div>
       ) : error ? (
         <div className="empty-upload">
-          <h3>Не удалось загрузить сертификаты</h3>
-          <p>{error}</p>
+          <h3>{t("Не удалось загрузить сертификаты")}</h3>
+          <p>{t(error)}</p>
         </div>
       ) : certificates.length === 0 ? (
         <div className="empty-upload">
           <span>＋</span>
-          <h3>Пока нет опубликованных сертификатов</h3>
+          <h3>{t("Пока нет опубликованных сертификатов")}</h3>
         </div>
       ) : (
         <div className="uploaded-grid">
@@ -69,7 +71,7 @@ export default function Certificates() {
             <article className="uploaded-card" key={certificate.id}>
               <img
                 src={getMediaUrl(certificate.photo_path)}
-                alt="Сертификат"
+                alt={t("Сертификат")}
               />
               {certificate.description && (
                 <p className="certificate-public-description">

@@ -1,4 +1,7 @@
 
+import SettingsControls from "./SettingsControls";
+import { useI18n } from "../lib/i18n";
+
 const links = [
   ["Главная", "home"],
   ["Курсы", "courses"],
@@ -8,11 +11,16 @@ const links = [
 ];
 
 export default function Header({ page, setPage }) {
+  const { language, t } = useI18n();
+  const contactMessage = language === "kg"
+    ? "Саламатсызбы! IT ADIS курстары тууралуу билгим келет."
+    : "Здравствуйте! Хочу узнать о курсах IT ADIS";
+
   return (
     <header className="header">
       <button className="logo" onClick={() => setPage("home")}>
         <div className="logo-circle">
-          <img src="/images/logo.png" alt="Логотип IT ADIS" />
+          <img src={`${import.meta.env.BASE_URL}images/logo.png`} alt={t("Логотип IT ADIS")} />
         </div>
         <div>
           <h2 className="brand"><span className="brand-it">IT</span><span className="brand-adis">adis</span></h2>
@@ -26,19 +34,22 @@ export default function Header({ page, setPage }) {
             onClick={() => setPage(id)}
             className={page === id ? "nav-link active" : "nav-link"}
           >
-            {name}
+            {t(name)}
           </button>
         ))}
       </nav>
 
-      <a
-        className="header-contact"
-        href="https://wa.me/996558553177?text=Здравствуйте!%20Хочу%20узнать%20о%20курсах%20IT%20ADIS"
-        target="_blank"
-        rel="noreferrer"
-      >
-        Связаться ↗
-      </a>
+      <div className="header-actions">
+        <SettingsControls />
+        <a
+          className="header-contact"
+          href={`https://wa.me/996558553177?text=${encodeURIComponent(contactMessage)}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {t("Связаться ↗")}
+        </a>
+      </div>
     </header>
   );
 }

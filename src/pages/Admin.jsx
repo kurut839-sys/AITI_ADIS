@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { getMediaUrl, supabase } from "../lib/supabase";
+import { useI18n } from "../lib/i18n";
 
 const EMPTY_TEACHER = {
   name: "",
@@ -29,6 +30,7 @@ function autoResizeTextarea(event) {
 }
 
 export default function Admin() {
+  const { language, t } = useI18n();
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [dashboardLoading, setDashboardLoading] = useState(false);
@@ -156,15 +158,17 @@ export default function Admin() {
           email: authForm.email.trim(),
           password: authForm.password,
           options: {
-            emailRedirectTo: `${window.location.origin}/admin`,
+            emailRedirectTo: `${window.location.origin}${import.meta.env.BASE_URL}admin`,
           },
         });
         if (authError) throw authError;
         const userId = data.user?.id;
         setNotice(
           userId
-            ? `Аккаунт создан. UUID: ${userId}. Подтвердите email, если Supabase запросит подтверждение.`
-            : "Аккаунт создан. Проверьте почту для подтверждения.",
+            ? language === "kg"
+              ? `Аккаунт түзүлдү. UUID: ${userId}. Supabase ырастоону сураса, email дарегиңизди ырастаңыз.`
+              : `Аккаунт создан. UUID: ${userId}. Подтвердите email, если Supabase запросит подтверждение.`
+            : t("Аккаунт создан. Проверьте почту для подтверждения."),
         );
       } else {
         const { error: authError } = await supabase.auth.signInWithPassword({
@@ -180,6 +184,26 @@ export default function Admin() {
     }
   }
 
+  async function handleGoogleSignIn() {
+    if (!supabase) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const { error: authError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + import.meta.env.BASE_URL + "admin",
+          queryParams: { prompt: "select_account" },
+        },
+      });
+      if (authError) throw authError;
+    } catch (authError) {
+      setError(getErrorMessage(authError));
+    } finally {
+      setBusy(false);
+    }
+  }
   async function handleSignOut() {
     if (!supabase) return;
     setBusy(true);
@@ -273,7 +297,9 @@ export default function Admin() {
         try {
           await removeImage(teacherDraft.photoPath);
         } catch (cleanupError) {
-          cleanupWarning = `Данные сохранены, но старое фото удалить не удалось: ${getErrorMessage(cleanupError)}`;
+          cleanupWarning = language === "kg"
+            ? `Маалымат сакталды, бирок эски сүрөттү өчүрүү мүмкүн болгон жок: ${getErrorMessage(cleanupError)}`
+            : `Данные сохранены, но старое фото удалить не удалось: ${getErrorMessage(cleanupError)}`;
         }
       }
 
@@ -332,7 +358,9 @@ export default function Admin() {
         try {
           await removeImage(certificateDraft.photoPath);
         } catch (cleanupError) {
-          cleanupWarning = `Данные сохранены, но старое фото удалить не удалось: ${getErrorMessage(cleanupError)}`;
+          cleanupWarning = language === "kg"
+            ? `Маалымат сакталды, бирок эски сүрөттү өчүрүү мүмкүн болгон жок: ${getErrorMessage(cleanupError)}`
+            : `Данные сохранены, но старое фото удалить не удалось: ${getErrorMessage(cleanupError)}`;
         }
       }
 
@@ -380,7 +408,7 @@ export default function Admin() {
   }
 
   async function deleteContent(table, item) {
-    if (!window.confirm("Удалить материал и его фотографию?")) return;
+    if (!window.confirm(t("Удалить материал и его фотографию?"))) return;
 
     setBusy(true);
     setError("");
@@ -399,7 +427,9 @@ export default function Admin() {
       try {
         await removeImage(item.photo_path);
       } catch (imageError) {
-        cleanupWarning = `Материал удалён, но фотографию удалить не удалось: ${getErrorMessage(imageError)}`;
+        cleanupWarning = language === "kg"
+          ? `Материал өчүрүлдү, бирок сүрөттү өчүрүү мүмкүн болгон жок: ${getErrorMessage(imageError)}`
+          : `Материал удалён, но фотографию удалить не удалось: ${getErrorMessage(imageError)}`;
       }
 
       await refreshDashboard();
@@ -467,7 +497,7 @@ export default function Admin() {
   }
 
   async function removeAdministrator(userId) {
-    if (!window.confirm("Снять права администратора с этого аккаунта?")) return;
+    if (!window.confirm(t("Снять права администратора с этого аккаунта?"))) return;
 
     setBusy(true);
     setError("");
@@ -495,24 +525,28 @@ export default function Admin() {
     return (
       <main className="admin-page">
         <section className="admin-panel">
-          <h1>Панель администратора</h1>
-          <p>Не настроено подключение Supabase. Проверьте переменные окружения сайта.</p>
+          <h1>{t("Панель администратора")}</h1>
+          <p>{t("Вход через Google пока не настроен. Для подключения обратитесь к владельцу сайта.")}</p><button type="button" className="admin-google-button" disabled>{t("Войти через Google")}</button><a className="admin-back-link" href={import.meta.env.BASE_URL}>← {t("На сайт")}</a>
         </section>
       </main>
     );
   }
 
   if (authLoading) {
-    return <main className="admin-page"><p>Загружаем панель...</p></main>;
+    return <main className="admin-page"><p>{t("Загружаем панель...")}</p></main>;
   }
 
   if (!session) {
     return (
       <main className="admin-page">
         <section className="admin-panel admin-auth-panel">
-          <a className="admin-back-link" href="/">← На сайт</a>
-          <h1>Панель администратора</h1>
-          <p>Войдите в личный аккаунт владельца сайта.</p>
+          <a className="admin-back-link" href={import.meta.env.BASE_URL}>← {t("На сайт")}</a>
+          <h1>{t("Панель администратора")}</h1>
+          <p>{t("Войдите через Google со своим Gmail-аккаунтом. Редактировать сайт могут только назначенные администраторы.")}</p>
+          <button type="button" className="admin-google-button" onClick={handleGoogleSignIn} disabled={busy}>
+            {busy ? t("Подождите...") : t("Войти через Google")}
+          </button>
+          <p className="admin-auth-divider">{t("или по email и паролю")}</p>
 
           <form className="admin-form" onSubmit={handleAuthSubmit}>
             <label>
@@ -526,7 +560,7 @@ export default function Admin() {
               />
             </label>
             <label>
-              Пароль
+              {t("Пароль")}
               <input
                 type="password"
                 required
@@ -536,10 +570,10 @@ export default function Admin() {
                 onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })}
               />
             </label>
-            {error && <p className="admin-message admin-error" role="alert">{error}</p>}
-            {notice && <p className="admin-message admin-success">{notice}</p>}
+            {error && <p className="admin-message admin-error" role="alert">{t(error)}</p>}
+            {notice && <p className="admin-message admin-success">{t(notice)}</p>}
             <button type="submit" className="btn-primary" disabled={busy}>
-              {busy ? "Подождите..." : authMode === "sign-in" ? "Войти" : "Создать аккаунт"}
+              {busy ? t("Подождите...") : authMode === "sign-in" ? t("Войти") : t("Создать аккаунт")}
             </button>
           </form>
 
@@ -552,7 +586,7 @@ export default function Admin() {
               setNotice("");
             }}
           >
-            {authMode === "sign-in" ? "Создать личный аккаунт" : "Уже есть аккаунт? Войти"}
+            {authMode === "sign-in" ? t("Создать личный аккаунт") : t("Уже есть аккаунт? Войти")}
           </button>
         </section>
       </main>
@@ -560,7 +594,7 @@ export default function Admin() {
   }
 
   if (dashboardLoading && !isAdmin) {
-    return <main className="admin-page"><p>Проверяем права доступа...</p></main>;
+    return <main className="admin-page"><p>{t("Проверяем права доступа...")}</p></main>;
   }
 
   if (!isAdmin) {
@@ -568,21 +602,21 @@ export default function Admin() {
       <main className="admin-page">
         <section className="admin-panel">
           <div className="admin-topbar">
-            <a className="admin-back-link" href="/">← На сайт</a>
-            <button type="button" className="admin-secondary-button" onClick={handleSignOut} disabled={busy}>Выйти</button>
+            <a className="admin-back-link" href={import.meta.env.BASE_URL}>← {t("На сайт")}</a>
+            <button type="button" className="admin-secondary-button" onClick={handleSignOut} disabled={busy}>{t("Выйти")}</button>
           </div>
-          <h1>Доступ пока не назначен</h1>
-          <p>UUID вашего аккаунта Supabase:</p>
+          <h1>{t("Доступ пока не назначен")}</h1><p>{t("Вы вошли как")} {session.user.email}. {t("Для редактирования нужны права администратора.")}</p>
+          <p>{t("UUID вашего аккаунта Supabase:")}</p>
           <code className="admin-user-uuid">{session.user.id}</code>
           <p className="admin-help">
-            Если вы владелец проекта и настраиваете первого администратора, добавьте этот UUID в таблицу site_admins через Supabase SQL Editor. Для передачи доступа действующий администратор может добавить UUID нового владельца в разделе «Администраторы».
+            {t("Если вы владелец проекта и настраиваете первого администратора, добавьте этот UUID в таблицу site_admins через Supabase SQL Editor. Для передачи доступа действующий администратор может добавить UUID нового владельца в разделе «Администраторы».")}
           </p>
           <pre className="admin-sql">insert into public.site_admins (user_id) values ('{session.user.id}');</pre>
           <button type="button" className="admin-secondary-button" onClick={() => refreshDashboard().catch((loadError) => setError(getErrorMessage(loadError)))} disabled={dashboardLoading}>
-            Проверить права доступа
+            {t("Проверить права доступа")}
           </button>
-          {error && <p className="admin-message admin-error" role="alert">{error}</p>}
-          {notice && <p className="admin-message admin-success">{notice}</p>}
+          {error && <p className="admin-message admin-error" role="alert">{t(error)}</p>}
+          {notice && <p className="admin-message admin-success">{t(notice)}</p>}
         </section>
       </main>
     );
@@ -593,60 +627,60 @@ export default function Admin() {
       <section className="admin-dashboard">
         <div className="admin-topbar">
           <div>
-            <a className="admin-back-link" href="/">← На сайт</a>
-            <h1>Управление сайтом</h1>
+            <a className="admin-back-link" href={import.meta.env.BASE_URL}>← {t("На сайт")}</a>
+            <h1>{t("Управление сайтом")}</h1>
             <p>{session.user.email}</p>
           </div>
-          <button type="button" className="admin-secondary-button" onClick={handleSignOut} disabled={busy}>Выйти</button>
+          <button type="button" className="admin-secondary-button" onClick={handleSignOut} disabled={busy}>{t("Выйти")}</button>
         </div>
 
-        <nav className="admin-tabs" aria-label="Разделы панели">
-          <button className={activeTab === "teachers" ? "active" : ""} onClick={() => setActiveTab("teachers")}>Преподаватели</button>
-          <button className={activeTab === "certificates" ? "active" : ""} onClick={() => setActiveTab("certificates")}>Сертификаты</button>
-          <button className={activeTab === "admins" ? "active" : ""} onClick={() => setActiveTab("admins")}>Администраторы</button>
+        <nav className="admin-tabs" aria-label={t("Разделы панели")}>
+          <button className={activeTab === "teachers" ? "active" : ""} onClick={() => setActiveTab("teachers")}>{t("Преподаватели")}</button>
+          <button className={activeTab === "certificates" ? "active" : ""} onClick={() => setActiveTab("certificates")}>{t("Сертификаты")}</button>
+          <button className={activeTab === "admins" ? "active" : ""} onClick={() => setActiveTab("admins")}>{t("Администраторы")}</button>
         </nav>
 
-        {error && <p className="admin-message admin-error" role="alert">{error}</p>}
-        {notice && <p className="admin-message admin-success">{notice}</p>}
-        {dashboardLoading && <p className="admin-loading">Обновляем данные...</p>}
+        {error && <p className="admin-message admin-error" role="alert">{t(error)}</p>}
+        {notice && <p className="admin-message admin-success">{t(notice)}</p>}
+        {dashboardLoading && <p className="admin-loading">{t("Обновляем данные...")}</p>}
 
         {activeTab === "teachers" && (
           <div className="admin-content">
             <form className="admin-form admin-editor" onSubmit={saveTeacher}>
-              <h2>{editingTeacherId ? "Редактировать преподавателя" : "Добавить преподавателя"}</h2>
+              <h2>{editingTeacherId ? t("Редактировать преподавателя") : t("Добавить преподавателя")}</h2>
               <div className="admin-form-grid">
                 <label>
-                  Имя учителя
+                  {t("Имя учителя")}
                   <input value={teacherDraft.name} onChange={(event) => setTeacherDraft({ ...teacherDraft, name: event.target.value })} required />
                 </label>
                 <label>
-                  Стаж работы
+                  {t("Стаж работы")}
                   <input value={teacherDraft.experience} onChange={(event) => setTeacherDraft({ ...teacherDraft, experience: event.target.value })} required />
                 </label>
                 <label className="field-wide">
-                  Специализация
+                  {t("Специализация")}
                   <input value={teacherDraft.specialty} onChange={(event) => setTeacherDraft({ ...teacherDraft, specialty: event.target.value })} required />
                 </label>
                 <label className="field-wide">
-                  Описание
+                  {t("Описание")}
                   <textarea rows="4" value={teacherDraft.description} onChange={(event) => { setTeacherDraft({ ...teacherDraft, description: event.target.value }); autoResizeTextarea(event); }} />
                 </label>
                 <label className="field-wide">
-                  Фото преподавателя (JPG, PNG, WEBP или GIF, до 5 МБ)
+                  {t("Фото преподавателя (JPG, PNG, WEBP или GIF, до 5 МБ)")}
                   <input key={teacherFileKey} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => setTeacherFile(event.target.files?.[0] || null)} />
                 </label>
               </div>
               {teacherDraft.photoPath && (
-                <img className="admin-image-preview" src={getMediaUrl(teacherDraft.photoPath)} alt="Текущее фото преподавателя" />
+                <img className="admin-image-preview" src={getMediaUrl(teacherDraft.photoPath)} alt={t("Текущее фото преподавателя")} />
               )}
               <div className="admin-form-actions">
-                <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Сохраняем..." : editingTeacherId ? "Сохранить изменения" : "Добавить преподавателя"}</button>
-                {editingTeacherId && <button type="button" className="admin-secondary-button" onClick={resetTeacherForm}>Отмена</button>}
+                <button type="submit" className="btn-primary" disabled={busy}>{busy ? t("Сохраняем...") : editingTeacherId ? t("Сохранить изменения") : t("Добавить преподавателя")}</button>
+                {editingTeacherId && <button type="button" className="admin-secondary-button" onClick={resetTeacherForm}>{t("Отмена")}</button>}
               </div>
             </form>
 
             <div className="admin-record-list">
-              {teachers.length === 0 ? <p className="admin-empty">Преподавателей пока нет.</p> : teachers.map((teacher) => (
+              {teachers.length === 0 ? <p className="admin-empty">{t("Преподавателей пока нет.")}</p> : teachers.map((teacher) => (
                 <article className="admin-record" key={teacher.id}>
                   {teacher.photo_path && <img src={getMediaUrl(teacher.photo_path)} alt="" />}
                   <div className="admin-record-info">
@@ -654,13 +688,13 @@ export default function Admin() {
                     <p>{teacher.specialty} · {teacher.experience}</p>
                     {teacher.description && <p>{teacher.description}</p>}
                     <span className={teacher.published ? "admin-status published" : "admin-status"}>
-                      {teacher.published ? "Опубликован" : "Черновик"}
+                      {t(teacher.published ? "Опубликован" : "Черновик")}
                     </span>
                   </div>
                   <div className="admin-record-actions">
-                    <button type="button" className="admin-secondary-button" onClick={() => editTeacher(teacher)}>Изменить</button>
-                    <button type="button" className="admin-publish-button" onClick={() => togglePublished("teachers", teacher)} disabled={busy}>{teacher.published ? "Снять публикацию" : "Опубликовать"}</button>
-                    <button type="button" className="admin-delete-button" onClick={() => deleteContent("teachers", teacher)} disabled={busy}>Удалить</button>
+                    <button type="button" className="admin-secondary-button" onClick={() => editTeacher(teacher)}>{t("Изменить")}</button>
+                    <button type="button" className="admin-publish-button" onClick={() => togglePublished("teachers", teacher)} disabled={busy}>{t(teacher.published ? "Снять публикацию" : "Опубликовать")}</button>
+                    <button type="button" className="admin-delete-button" onClick={() => deleteContent("teachers", teacher)} disabled={busy}>{t("Удалить")}</button>
                   </div>
                 </article>
               ))}
@@ -671,40 +705,40 @@ export default function Admin() {
         {activeTab === "certificates" && (
           <div className="admin-content">
             <form className="admin-form admin-editor" onSubmit={saveCertificate}>
-              <h2>{editingCertificateId ? "Редактировать сертификат" : "Добавить сертификат"}</h2>
+              <h2>{editingCertificateId ? t("Редактировать сертификат") : t("Добавить сертификат")}</h2>
               <div className="admin-form-grid">
                 <label className="field-wide">
-                  Описание сертификата
+                  {t("Описание сертификата")}
                   <textarea rows="4" value={certificateDraft.description} onChange={(event) => { setCertificateDraft({ ...certificateDraft, description: event.target.value }); autoResizeTextarea(event); }} />
                 </label>
                 <label className="field-wide">
-                  Фото сертификата (JPG, PNG, WEBP или GIF, до 5 МБ)
+                  {t("Фото сертификата (JPG, PNG, WEBP или GIF, до 5 МБ)")}
                   <input key={certificateFileKey} type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={(event) => setCertificateFile(event.target.files?.[0] || null)} />
                 </label>
               </div>
               {certificateDraft.photoPath && (
-                <img className="admin-image-preview" src={getMediaUrl(certificateDraft.photoPath)} alt="Текущий сертификат" />
+                <img className="admin-image-preview" src={getMediaUrl(certificateDraft.photoPath)} alt={t("Текущий сертификат")} />
               )}
               <div className="admin-form-actions">
-                <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Сохраняем..." : editingCertificateId ? "Сохранить изменения" : "Добавить сертификат"}</button>
-                {editingCertificateId && <button type="button" className="admin-secondary-button" onClick={resetCertificateForm}>Отмена</button>}
+                <button type="submit" className="btn-primary" disabled={busy}>{busy ? t("Сохраняем...") : editingCertificateId ? t("Сохранить изменения") : t("Добавить сертификат")}</button>
+                {editingCertificateId && <button type="button" className="admin-secondary-button" onClick={resetCertificateForm}>{t("Отмена")}</button>}
               </div>
             </form>
 
             <div className="admin-record-list">
-              {certificates.length === 0 ? <p className="admin-empty">Сертификатов пока нет.</p> : certificates.map((certificate) => (
+              {certificates.length === 0 ? <p className="admin-empty">{t("Сертификатов пока нет.")}</p> : certificates.map((certificate) => (
                 <article className="admin-record" key={certificate.id}>
                   <img src={getMediaUrl(certificate.photo_path)} alt="" />
                   <div className="admin-record-info">
-                    <p>{certificate.description || "Описание не добавлено."}</p>
+                    <p>{certificate.description || t("Описание не добавлено.")}</p>
                     <span className={certificate.published ? "admin-status published" : "admin-status"}>
-                      {certificate.published ? "Опубликован" : "Черновик"}
+                      {t(certificate.published ? "Опубликован" : "Черновик")}
                     </span>
                   </div>
                   <div className="admin-record-actions">
-                    <button type="button" className="admin-secondary-button" onClick={() => editCertificate(certificate)}>Изменить</button>
-                    <button type="button" className="admin-publish-button" onClick={() => togglePublished("certificates", certificate)} disabled={busy}>{certificate.published ? "Снять публикацию" : "Опубликовать"}</button>
-                    <button type="button" className="admin-delete-button" onClick={() => deleteContent("certificates", certificate)} disabled={busy}>Удалить</button>
+                    <button type="button" className="admin-secondary-button" onClick={() => editCertificate(certificate)}>{t("Изменить")}</button>
+                    <button type="button" className="admin-publish-button" onClick={() => togglePublished("certificates", certificate)} disabled={busy}>{t(certificate.published ? "Снять публикацию" : "Опубликовать")}</button>
+                    <button type="button" className="admin-delete-button" onClick={() => deleteContent("certificates", certificate)} disabled={busy}>{t("Удалить")}</button>
                   </div>
                 </article>
               ))}
@@ -715,16 +749,16 @@ export default function Admin() {
         {activeTab === "admins" && (
           <div className="admin-content">
             <div className="admin-editor">
-              <h2>Передать или снять права администратора</h2>
+              <h2>{t("Передать или снять права администратора")}</h2>
               <p className="admin-help">
-                Новый владелец должен создать личный аккаунт через /admin и подтвердить email. Добавьте UUID его аккаунта ниже. После проверки доступа новый владелец сможет снять права с предыдущего администратора. Не удаляйте последнего администратора.
+                {t("Новый владелец должен создать личный аккаунт через /admin и подтвердить email. Добавьте UUID его аккаунта ниже. После проверки доступа новый владелец сможет снять права с предыдущего администратора. Не удаляйте последнего администратора.")}
               </p>
               <form className="admin-add-user" onSubmit={addAdministrator}>
                 <label>
-                  UUID аккаунта нового администратора
+                  {t("UUID аккаунта нового администратора")}
                   <input value={adminUserId} onChange={(event) => setAdminUserId(event.target.value)} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" required />
                 </label>
-                <button type="submit" className="btn-primary" disabled={busy}>Назначить администратором</button>
+                <button type="submit" className="btn-primary" disabled={busy}>{t("Назначить администратором")}</button>
               </form>
             </div>
 
@@ -732,7 +766,7 @@ export default function Admin() {
               {admins.map((admin) => (
                 <article className="admin-record admin-member" key={admin.user_id}>
                   <div className="admin-record-info">
-                    <h3>{admin.user_id === session.user.id ? "Ваш аккаунт" : "Администратор"}</h3>
+                    <h3>{t(admin.user_id === session.user.id ? "Ваш аккаунт" : "Администратор")}</h3>
                     <code>{admin.user_id}</code>
                   </div>
                   <button
@@ -741,7 +775,7 @@ export default function Admin() {
                     onClick={() => removeAdministrator(admin.user_id)}
                     disabled={busy || admin.user_id === session.user.id}
                   >
-                    {admin.user_id === session.user.id ? "Текущий аккаунт" : "Снять права"}
+                    {t(admin.user_id === session.user.id ? "Текущий аккаунт" : "Снять права")}
                   </button>
                 </article>
               ))}

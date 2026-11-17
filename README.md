@@ -1,16 +1,33 @@
-# React + Vite
+# IT ADIS
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Сайт образовательного центра IT ADIS на React и Vite.
 
-Currently, two official plugins are available:
+## Запуск
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```sh
+npm install
+npm run dev
+```
 
-## React Compiler
+Для сборки production-версии выполните `npm run build`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Язык и тема
 
-## Expanding the Oxlint configuration
+Язык интерфейса переключается кнопками **KG / RU**, а цветовая схема — кнопкой
+с солнцем или луной. Выбранные настройки сохраняются в браузере.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Supabase
+
+Скопируйте `.env.example` в `.env` и укажите параметры проекта:
+
+```env
+VITE_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
+```
+
+Для создания таблиц и хранилища выполните `supabase/schema.sql` в SQL Editor
+вашего проекта Supabase.
+
+## Вход через Google
+
+Настройка: [supabase/GOOGLE_AUTH.md](supabase/GOOGLE_AUTH.md). Панель: /AITI_ADIS/admin.

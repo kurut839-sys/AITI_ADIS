@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { getMediaUrl, supabase } from "../lib/supabase";
+import { useI18n } from "../lib/i18n";
 
 export default function Teachers() {
+  const { t } = useI18n();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -46,10 +48,10 @@ export default function Teachers() {
   return (
     <main className="page-container">
       <div className="section-title page-title">
-        <span>OUR TEAM</span>
-        <h1>Наши <span>преподаватели</span></h1>
+        <span>{t("OUR TEAM")}</span>
+        <h1>{t("Наши ")}<span>{t("преподаватели")}</span></h1>
         <p>
-          Знакомьтесь с командой{" "}
+          {t("Знакомьтесь с командой")}{" "}
           <span className="brand">
             <span className="brand-it">IT</span>
             <span className="brand-adis">adis</span>
@@ -58,16 +60,16 @@ export default function Teachers() {
       </div>
 
       {loading ? (
-        <div className="empty-upload"><p>Загружаем преподавателей...</p></div>
+        <div className="empty-upload"><p>{t("Загружаем преподавателей...")}</p></div>
       ) : error ? (
         <div className="empty-upload">
-          <h3>Не удалось загрузить преподавателей</h3>
-          <p>{error}</p>
+          <h3>{t("Не удалось загрузить преподавателей")}</h3>
+          <p>{t(error)}</p>
         </div>
       ) : teachers.length === 0 ? (
         <div className="empty-upload">
           <span>＋</span>
-          <h3>Пока нет опубликованных преподавателей</h3>
+          <h3>{t("Пока нет опубликованных преподавателей")}</h3>
         </div>
       ) : (
         <div className="teacher-list">
@@ -80,12 +82,12 @@ export default function Teachers() {
                   alt={teacher.name}
                 />
               ) : (
-                <div className="teacher-photo teacher-photo-empty">Фото</div>
+                <div className="teacher-photo teacher-photo-empty">{t("Фото")}</div>
               )}
               <h3>{teacher.name}</h3>
               <span className="teacher-role">{teacher.specialty}</span>
               <p>{teacher.description}</p>
-              <div className="teacher-meta">Стаж: {teacher.experience}</div>
+              <div className="teacher-meta">{t("Стаж:")} {teacher.experience}</div>
             </article>
           ))}
         </div>
