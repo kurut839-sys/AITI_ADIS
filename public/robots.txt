@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kurut839-sys.github.io/AITI_ADIS/sitemap.xml

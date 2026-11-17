@@ -31,3 +31,14 @@ VITE_SUPABASE_PUBLISHABLE_KEY=YOUR_SUPABASE_PUBLISHABLE_KEY
 ## Вход через Google
 
 Настройка: [supabase/GOOGLE_AUTH.md](supabase/GOOGLE_AUTH.md). Панель: /AITI_ADIS/admin.
+
+## Индексация в Google
+
+После публикации добавьте URL-prefix property
+`https://kurut839-sys.github.io/AITI_ADIS/` в
+[Google Search Console](https://search.google.com/search-console), подтвердите
+владение сайтом и отправьте sitemap:
+`https://kurut839-sys.github.io/AITI_ADIS/sitemap.xml`.
+
+Google сам определяет сроки и позиции индексации; добавление sitemap не
+гарантирует немедленное появление сайта в результатах поиска.
